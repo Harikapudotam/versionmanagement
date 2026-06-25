@@ -72,7 +72,7 @@
               <smartTable:customToolbar>
     <OverflowToolbar id="_IDGenOverflowToolbar1">
 
-        <Title id="_IDGenTitle" text="Sales Orders"/>
+        <Title id="_IDGenTitle" />
 
         <ToolbarSpacer id="_IDGenToolbarSpacer"/>
 

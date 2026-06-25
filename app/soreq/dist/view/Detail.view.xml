@@ -16,15 +16,15 @@
                 press="onEdit"
                 visible="{= ${Status} !== 'OnHold' &amp;&amp; ${Status} !== 'Draft' &amp;&amp; !${viewModel>/editMode} &amp;&amp; !${viewModel>/isDraft} }"
             />
-        <Button id="_IDGenButton7"
-                
+            <Button
+                id="_IDGenButton7"
                 text="SaveDraft"
                 press="onSaveDraft"
                 visible="{= ${Status} === 'Draft' }"
             />
 
-            <Button id="_IDGenButton9" 
-                
+            <Button
+                id="_IDGenButton9"
                 text="Submit"
                 press="onSave1"
                 visible="{= ${Status} === 'Draft' }"
@@ -186,8 +186,8 @@
                                     text="Status"
                                     width="200px"
                                 />
-                                <Input id="_IDGenInput27"
-                                   
+                                <Input
+                                    id="_IDGenInput27"
                                     width="200px"
                                     value="{Status}"
                                     editable="false"
@@ -201,9 +201,19 @@
 
             <Table
                 id="_IDGenTable2"
-                headerText="Items"
-                items="{Items}"
-            >
+                items="{Items}">
+                <headerToolbar>
+                    <OverflowToolbar id="_IDGenOverflowToolbar3">
+                        <Title
+                            id="_IDGenTitle2"
+                            text="Items"
+                        />
+
+                        <ToolbarSpacer id="_IDGenToolbarSpacer2" />
+
+        
+                    </OverflowToolbar>
+                </headerToolbar>
                 <columns>
                     <Column id="_IDGenColumn">
                         <Text

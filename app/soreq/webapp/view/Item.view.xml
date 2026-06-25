@@ -32,6 +32,7 @@
                             id="_IDGenInput1"
                             value="{ItemNo}"
                             editable="false"
+                            width="200px"
                         />
 
                         <Label
@@ -42,6 +43,7 @@
                             id="_IDGenInput2"
                             value="{MaterialNo}"
                             editable="false"
+                            width="200px"
                         />
 
                         <Label
@@ -52,6 +54,7 @@
                             id="_IDGenInput3"
                             value="{MaterialDescription}"
                             editable="false"
+                            width="200px"
                         />
 
                         <Label
@@ -62,6 +65,7 @@
                             id="_IDGenInput4"
                             value="{Quantity}"
                             editable="false"
+                            width="200px"
                         />
 
                         <Label
@@ -72,6 +76,7 @@
                             id="_IDGenInput5"
                             value="{UOM}"
                             editable="false"
+                            width="200px"
                         />
 
                         <Label
@@ -82,6 +87,7 @@
                             id="_IDGenInput6"
                             value="{UnitPrice}"
                             editable="false"
+                            width="200px"
                         />
 
                         <Label
@@ -92,6 +98,7 @@
                             id="_IDGenInput18"
                             value="{NetAmount}"
                             editable="false"
+                            width="200px"
                         />
                     </f:content>
                 </f:SimpleForm>

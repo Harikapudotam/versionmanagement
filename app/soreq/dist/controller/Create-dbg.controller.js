@@ -63,8 +63,6 @@ sap.ui.define([
 
                     sap.m.MessageToast.show("Created successfully");
 
-                    oODataModel.refresh(true);
-
                     this.getOwnerComponent()
                         .getRouter()
                         .navTo("RouteSO");
@@ -90,6 +88,9 @@ sap.ui.define([
             });
 
             this.getOwnerComponent().getRouter().navTo("RouteSO");
+
+            oODataModel.refresh(true);
+
         },
         onSubmit: function () {
             console.log('save clicked');
@@ -113,7 +114,7 @@ sap.ui.define([
 
                     sap.m.MessageToast.show("Created successfully");
 
-                    oODataModel.refresh(true);
+
 
                     this.getOwnerComponent()
                         .getRouter()
