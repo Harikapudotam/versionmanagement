@@ -39,7 +39,7 @@
                 </smartFilterBar:controlConfiguration>
             </smartFilterBar:SmartFilterBar>
 
-            <smartTable:SmartTable
+            <smartTable:SmartTable id="_IDGenSmartTable"
                 entitySet="SalesOrderHeaders"
                 smartFilterId="smartFilterBar"
                 tableType="ResponsiveTable"
@@ -70,16 +70,16 @@
                 </Table>
 
               <smartTable:customToolbar>
-    <OverflowToolbar>
+    <OverflowToolbar id="_IDGenOverflowToolbar1">
 
-        <Title text="Sales Orders"/>
+        <Title id="_IDGenTitle" text="Sales Orders"/>
 
-        <ToolbarSpacer/>
+        <ToolbarSpacer id="_IDGenToolbarSpacer"/>
 
-        <Button
+        <Button id="_IDGenButton2"
             text="Create"
             press="onCreatePress"
-           
+            visible="{= ${roleModel>/role} === 'CUSTOMER' }"
             />
 
     </OverflowToolbar>

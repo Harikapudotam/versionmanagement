@@ -4,6 +4,7 @@ service MyService {
     entity SalesOrderHeaders as projection on db.SalesOrderHeader actions {
         action approve();
         action rejectt();
+        action save();
     }
     entity SalesOrderItems as projection on db.SalesOrderItem;
     action sendReport() returns String;

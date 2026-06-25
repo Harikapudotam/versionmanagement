@@ -43,6 +43,8 @@ sap.ui.define([
                 }
             });
 
+            console.log("completed");
+
 
         },
 

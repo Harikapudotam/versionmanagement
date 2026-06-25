@@ -34,53 +34,111 @@ module.exports = cds.service.impl(async function (srv) {
     console.log('NEW RECORDS HAS TO BE CREATED')
     const newId = cds.utils.uuid();
     console.log(req.data);
-    // If we want to update the existing record's status ,then we can do it here
-    // await UPDATE(SalesOrderHeaders)
-    //   .set({ Status: 'Submitted' })
-    //   .where({ ID: req.data.ID });
+    const tx = cds.transaction(req);
 
     //have to insert a new record here.
     //need to check if it is HP buyer it has to be updated else a new record will be created . need to write a if condition to check whether the user who has update is HP buyer or not. If HP buyer made changes to the initial record directly else create a new record
-
+    console.log('User role:', req.user.roles);
     //checking if any changed version is there: 
     //if no changed version , we can create , else throw an error message to user that there is already a changed version available. 
-    const maxVersion = await SELECT.one`max(VersionNo) as maxVersion`.from(SalesOrderHeaders).where({ SalesOrderNo: req.data.SalesOrderNo });
-    if (maxVersion.maxVersion === req.data.VersionNo) {
-      console.log(JSON.stringify(req.data.Items, null, 2));
-      console.log('new');
-      
-      await INSERT.into(SalesOrderHeaders).entries({
-        SalesOrderNo: req.data.SalesOrderNo,
-        VersionNo: req.data.VersionNo + 1,
-        Status: 'OnHold',
-        ID: newId,
-        CustomerId: req.data.CustomerId,
-        CustomerName: req.data.CustomerName,
-        Factory: req.data.Factory,
-        OrderDate: req.data.OrderDate,
-        RequestedDate: req.data.RequestedDate,
-        Currency: req.data.Currency,
-        TotalAmount: req.data.TotalAmount,
-        Items: req.data.Items.map(item => ({
-          ID: cds.utils.uuid(),
-          ItemNo: item.ItemNo,
-          MaterialNo: item.MaterialNo,
-          MaterialDescription: item.MaterialDescription,
-          Quantity: item.Quantity,
-          UOM: item.UOM,
-          UnitPrice: item.UnitPrice,
-          NetAmount: item.NetAmount
-        }))
-      });
+    if (req.user.is("Buyer")) {
+      console.log('HP Buyer is updating the record');
+      await tx.run(UPDATE(SalesOrderHeaders)
+        .set({
+          CustomerId: req.data.CustomerId,
+          CustomerName: req.data.CustomerName,
+          Factory: req.data.Factory,
+          OrderDate: req.data.OrderDate,
+          RequestedDate: req.data.RequestedDate,
+          Currency: req.data.Currency,
+          TotalAmount: req.data.TotalAmount,
+          Status: "Submitted"
+        })
+        .where({
+          SalesOrderNo: req.data.SalesOrderNo,
+          VersionNo: req.data.VersionNo,
+          ID: req.data.ID
+        }));
 
-    } else {
-      req.error(400, 'There is already a changed version available. Please refresh and try again.');
+      await tx.run(DELETE.from(SalesOrderItems)
+        .where({
+          Header_ID: req.data.ID
+        }));
+      await tx.run(INSERT.into(SalesOrderItems).entries(
+
+        req.data.Items.map(item => ({
+
+          ID: cds.utils.uuid(),
+
+          ItemNo: item.ItemNo,
+
+          MaterialNo: item.MaterialNo,
+
+          MaterialDescription: item.MaterialDescription,
+
+          Quantity: item.Quantity,
+
+          UOM: item.UOM,
+
+          UnitPrice: item.UnitPrice,
+
+          NetAmount: item.NetAmount,
+
+          Header_ID: req.data.ID,
+
+          Header_SalesOrderNo: req.data.SalesOrderNo,
+
+          Header_VersionNo: req.data.VersionNo
+
+        }))
+
+      ));
+      return {
+        ID: req.data.ID,
+        SalesOrderNo: req.data.SalesOrderNo,
+        VersionNo: req.data.VersionNo
+      };
     }
-    return {
-    ID: newId,
-    SalesOrderNo: req.data.SalesOrderNo,
-    VersionNo: req.data.VersionNo + 1
-};
+    else {
+      const maxVersion = await SELECT.one`max(VersionNo) as maxVersion`.from(SalesOrderHeaders).where({ SalesOrderNo: req.data.SalesOrderNo });
+      if (maxVersion.maxVersion === req.data.VersionNo) {
+        console.log(JSON.stringify(req.data.Items, null, 2));
+        console.log('new');
+
+        await tx.run(INSERT.into(SalesOrderHeaders).entries({
+          SalesOrderNo: req.data.SalesOrderNo,
+          VersionNo: req.data.VersionNo + 1,
+          Status: 'OnHold',
+          ID: newId,
+          CustomerId: req.data.CustomerId,
+          CustomerName: req.data.CustomerName,
+          Factory: req.data.Factory,
+          OrderDate: req.data.OrderDate,
+          RequestedDate: req.data.RequestedDate,
+          Currency: req.data.Currency,
+          TotalAmount: req.data.TotalAmount,
+          Items: req.data.Items.map(item => ({
+            ID: cds.utils.uuid(),
+            ItemNo: item.ItemNo,
+            MaterialNo: item.MaterialNo,
+            MaterialDescription: item.MaterialDescription,
+            Quantity: item.Quantity,
+            UOM: item.UOM,
+            UnitPrice: item.UnitPrice,
+            NetAmount: item.NetAmount
+          }))
+        }));
+
+      } else {
+        req.error(400, 'There is already a changed version available. Please refresh and try again.');
+      }
+      return {
+        ID: newId,
+        SalesOrderNo: req.data.SalesOrderNo,
+        VersionNo: req.data.VersionNo + 1
+      };
+
+    }
   });
 
   // srv.on('UPDATE', 'SalesOrderHeaders.drafts', async (req) => {
@@ -118,9 +176,9 @@ module.exports = cds.service.impl(async function (srv) {
     console.log('hEADER ID to be inserted', headerId.ID);
     console.log('Items to be inserted', updateDataItems);
     await DELETE.from(SalesOrderItems)
-    .where({
+      .where({
         Header_ID: headerId.ID
-    });
+      });
     await INSERT.into(SalesOrderItems).entries(
       updateDataItems.map(item => ({
         ID: cds.utils.uuid(),
@@ -149,7 +207,7 @@ module.exports = cds.service.impl(async function (srv) {
   //   //delete records where status is OnHold and version is not 1
   //   await DELETE.from(SalesOrderHeaders).where({ Status: 'Approved', VersionNo: 2 });
   //   console.log('Deleted records where status is Approved and version is 2');
-    
+
   // });
   srv.after('READ', SalesOrderHeaders, async (data) => {
     if (!Array.isArray(data)) return;
@@ -168,8 +226,8 @@ module.exports = cds.service.impl(async function (srv) {
   });
 
   srv.on('sendReport', async (req) => {
-    
-    
+
+
     // Implement the logic to send the report here
     // query the DB where status is On Hold. If yes send an email
     const onHoldOrders = await SELECT.from(SalesOrderHeaders).where({ Status: 'OnHold' });
@@ -180,30 +238,29 @@ module.exports = cds.service.impl(async function (srv) {
       console.log('Sending report email...');
       const html = buildSOTable(onHoldOrders);
 
-        await sendEmail(
-            "On Hold Sales Orders Report",
-            html
-        );
+      await sendEmail(
+        "On Hold Sales Orders Report",
+        html
+      );
 
-        return "Mail Sent Successfully";
+      return "Mail Sent Successfully";
     } else {
       console.log('No On Hold orders found. No email sent.');
-    } 
+    }
   });
 
   srv.on("whoAmI", async (req) => {
 
-    const userEmail = req.user.id || "";
-
     let role = "CUSTOMER";
 
-    if (userEmail.toLowerCase().includes("@ust.com")) {
-        role = "HP_BUYER";
+    console.log('roles', req.user.roles);
+    if (req.user.is("Buyer")) {
+      role = "HP_BUYER";
     }
 
     return {
-        role: role,
-        email: userEmail
+      role: role,
+      email: req.user.id
     };
-});
+  });
 });

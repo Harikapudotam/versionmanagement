@@ -20,7 +20,8 @@
                 id="_IDGenButton8"
                 icon="sap-icon://delete"
                 type="Reject"
-                visible="{= ${Status} === 'OnHold' 
+                visible="{=
+        ${Status} !== 'Approved'
     }"
                 press="onDelete"
             />
@@ -29,7 +30,10 @@
                 text="Approve"
                 type="Accept"
                 press="onApprove"
-                visible="{= ${Status} === 'OnHold' }"
+                visible="{=
+        ${Status} === 'OnHold'
+        &amp;&amp; ${roleModel>/role} === 'HP_BUYER'
+    }"
             />
 
             <Button
@@ -38,7 +42,8 @@
                 type="Reject"
                 press="onReject"
                 visible="{=
-        ${Status} !== 'Approved'
+        ${Status} === 'OnHold'
+        &amp;&amp; ${roleModel>/role} === 'HP_BUYER'
     }"
             />
             <Button
@@ -224,7 +229,11 @@
                 </columns>
 
                 <items>
-                    <ColumnListItem id="_IDGenColumnListItem1">
+                    <ColumnListItem id="_IDGenColumnListItem1"
+    
+        type="Navigation"
+        press="onItemPress"
+                    >
                         <cells>
                             <Input
                                 id="_IDGenInput12"
@@ -264,6 +273,8 @@
                         </cells>
                     </ColumnListItem>
                 </items>
+
+               
             </Table>
         </content>
     </Page>

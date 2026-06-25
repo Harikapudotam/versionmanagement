@@ -1,19 +1,29 @@
 {
   "xsappname": "salesorder",
   "tenant-mode": "dedicated",
-  "description": "Security profile of called application",
   "scopes": [
     {
-      "name": "uaa.user",
-      "description": "UAA"
+      "name": "$XSAPPNAME.Customer",
+      "description": "Customer Scope"
+    },
+    {
+      "name": "$XSAPPNAME.Buyer",
+      "description": "Buyer Scope"
     }
   ],
   "role-templates": [
     {
-      "name": "Token_Exchange",
-      "description": "UAA",
+      "name": "Customer",
+      "description": "Customer Role",
       "scope-references": [
-        "uaa.user"
+        "$XSAPPNAME.Customer"
+      ]
+    },
+    {
+      "name": "Buyer",
+      "description": "Buyer Role",
+      "scope-references": [
+        "$XSAPPNAME.Buyer"
       ]
     }
   ],

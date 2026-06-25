@@ -247,8 +247,19 @@ sap.ui.define([
                     }.bind(this)
                 }
             );
-        }
+        },
+        onItemPress: function (oEvent) {
+
+    var oItem = oEvent.getSource().getBindingContext().getObject();
+
+    this.getOwnerComponent().getRouter().navTo("Item", {
+    ID: oItem.ID
+});
+
+}
     });
+
+    
     function formatDate(oDate) {
         if (!oDate) return null;
 
@@ -256,4 +267,5 @@ sap.ui.define([
 
         return d.toISOString().split("T")[0];
     }
+    
 });
