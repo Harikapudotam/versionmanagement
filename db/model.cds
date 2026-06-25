@@ -19,7 +19,7 @@ entity SalesOrderHeader : managed {
         Status             : String(20) @readonly;
         customer        : String(40);
         buyerID            : String(40);
-
+        isDraft           : Boolean;
         Items              : Composition of many SalesOrderItem
                                  on Items.Header = $self;
         virtual CanApprove : Boolean;

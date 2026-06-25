@@ -14,8 +14,22 @@
                 id="_IDGenButton4"
                 text="Edit"
                 press="onEdit"
-                visible="{= ${Status} !== 'OnHold' &amp;&amp; !${viewModel>/editMode} }"
+                visible="{= ${Status} !== 'OnHold' &amp;&amp; ${Status} !== 'Draft' &amp;&amp; !${viewModel>/editMode} &amp;&amp; !${viewModel>/isDraft} }"
             />
+        <Button id="_IDGenButton7"
+                
+                text="SaveDraft"
+                press="onSaveDraft"
+                visible="{= ${Status} === 'Draft' }"
+            />
+
+            <Button id="_IDGenButton9" 
+                
+                text="Submit"
+                press="onSave1"
+                visible="{= ${Status} === 'Draft' }"
+            />
+
             <Button
                 id="_IDGenButton8"
                 icon="sap-icon://delete"
@@ -51,7 +65,7 @@
                 text="Save"
                 type="Emphasized"
                 press="onSave"
-                visible="{viewModel>/editMode}"
+                visible="{= ${viewModel>/editMode} &amp;&amp; ${Status} !== 'Draft' }"
             />
         </headerContent>
 
@@ -172,10 +186,11 @@
                                     text="Status"
                                     width="200px"
                                 />
-                                <Text
-                                    id="_IDGenText14"
+                                <Input id="_IDGenInput27"
+                                   
                                     width="200px"
-                                    text="{Status}"
+                                    value="{Status}"
+                                    editable="false"
                                 />
                             </f:content>
                         </f:SimpleForm>
@@ -229,10 +244,10 @@
                 </columns>
 
                 <items>
-                    <ColumnListItem id="_IDGenColumnListItem1"
-    
-        type="Navigation"
-        press="onItemPress"
+                    <ColumnListItem
+                        id="_IDGenColumnListItem1"
+                        type="Navigation"
+                        press="onItemPress"
                     >
                         <cells>
                             <Input
@@ -273,8 +288,6 @@
                         </cells>
                     </ColumnListItem>
                 </items>
-
-               
             </Table>
         </content>
     </Page>

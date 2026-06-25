@@ -9,13 +9,6 @@ module.exports = cds.service.impl(async function (srv) {
     const { maxNumber } = await SELECT.one`max(SalesOrderNo) as maxNumber`.from(SalesOrderHeaders);
     let iNewNo = (!maxNumber ? 10000000 : Number(maxNumber) + 1);
     req.data.VersionNo = 1;
-    req.data.Status = 'Submitted';
-    req.data.SalesOrderNo = iNewNo;
-  });
-  srv.before('NEW', 'SalesOrderHeaders.drafts', async (req) => {
-    const { maxNumber } = await SELECT.one`max(SalesOrderNo) as maxNumber`.from(SalesOrderHeaders);
-    let iNewNo = (!maxNumber ? 1 : Number(maxNumber) + 1);
-    req.data.VersionNo = 1;
     req.data.Status = 'Draft';
     req.data.SalesOrderNo = iNewNo;
   });
@@ -31,121 +24,233 @@ module.exports = cds.service.impl(async function (srv) {
     }
   });
   srv.on('UPDATE', SalesOrderHeaders, async (req) => {
-    console.log('NEW RECORDS HAS TO BE CREATED')
+    //console.log('NEW RECORDS HAS TO BE CREATED')
     const newId = cds.utils.uuid();
     console.log(req.data);
     const tx = cds.transaction(req);
 
     //have to insert a new record here.
     //need to check if it is HP buyer it has to be updated else a new record will be created . need to write a if condition to check whether the user who has update is HP buyer or not. If HP buyer made changes to the initial record directly else create a new record
-    console.log('User role:', req.user.roles);
+    //console.log('User role:', req.user.roles);
     //checking if any changed version is there: 
     //if no changed version , we can create , else throw an error message to user that there is already a changed version available. 
-    if (req.user.is("Buyer")) {
-      console.log('HP Buyer is updating the record');
-      await tx.run(UPDATE(SalesOrderHeaders)
-        .set({
-          CustomerId: req.data.CustomerId,
-          CustomerName: req.data.CustomerName,
-          Factory: req.data.Factory,
-          OrderDate: req.data.OrderDate,
-          RequestedDate: req.data.RequestedDate,
-          Currency: req.data.Currency,
-          TotalAmount: req.data.TotalAmount,
-          Status: "Submitted"
-        })
-        .where({
-          SalesOrderNo: req.data.SalesOrderNo,
-          VersionNo: req.data.VersionNo,
-          ID: req.data.ID
-        }));
+    console.log('Status', req.data.Status);
+    const statusCheck = await SELECT.one`max(Status) as maxVersion`.from(SalesOrderHeaders).where({ SalesOrderNo: req.data.SalesOrderNo });
+    console.log('Status Check:', statusCheck.maxVersion);
+    console.log('Status Check:', req.data.isDraft);
+    if (statusCheck.maxVersion === 'Draft') {
 
-      await tx.run(DELETE.from(SalesOrderItems)
-        .where({
-          Header_ID: req.data.ID
-        }));
-      await tx.run(INSERT.into(SalesOrderItems).entries(
+      if (req.data.isDraft === false) {
+        console.log("creating record for the first time");
+        await tx.run(UPDATE(SalesOrderHeaders)
+          .set({
+            CustomerId: req.data.CustomerId,
+            CustomerName: req.data.CustomerName,
+            Factory: req.data.Factory,
+            OrderDate: req.data.OrderDate,
+            RequestedDate: req.data.RequestedDate,
+            Currency: req.data.Currency,
+            TotalAmount: req.data.TotalAmount,
+            Status: "Submitted"
+          })
+          .where({
+            SalesOrderNo: req.data.SalesOrderNo,
+            VersionNo: req.data.VersionNo,
+            ID: req.data.ID
+          }));
 
-        req.data.Items.map(item => ({
+        await tx.run(DELETE.from(SalesOrderItems)
+          .where({
+            Header_ID: req.data.ID
+          }));
+        await tx.run(INSERT.into(SalesOrderItems).entries(
 
-          ID: cds.utils.uuid(),
+          req.data.Items.map(item => ({
 
-          ItemNo: item.ItemNo,
+            ID: cds.utils.uuid(),
 
-          MaterialNo: item.MaterialNo,
+            ItemNo: item.ItemNo,
 
-          MaterialDescription: item.MaterialDescription,
+            MaterialNo: item.MaterialNo,
 
-          Quantity: item.Quantity,
+            MaterialDescription: item.MaterialDescription,
 
-          UOM: item.UOM,
+            Quantity: item.Quantity,
 
-          UnitPrice: item.UnitPrice,
+            UOM: item.UOM,
 
-          NetAmount: item.NetAmount,
+            UnitPrice: item.UnitPrice,
 
-          Header_ID: req.data.ID,
+            NetAmount: item.NetAmount,
 
-          Header_SalesOrderNo: req.data.SalesOrderNo,
+            Header_ID: req.data.ID,
 
-          Header_VersionNo: req.data.VersionNo
+            Header_SalesOrderNo: req.data.SalesOrderNo,
 
-        }))
+            Header_VersionNo: req.data.VersionNo
 
-      ));
-      return {
-        ID: req.data.ID,
-        SalesOrderNo: req.data.SalesOrderNo,
-        VersionNo: req.data.VersionNo
-      };
+          }))
+
+        ));
+
+      }
+      else {
+        console.log('Draft record is being updated');
+        console.log('Draft record data:', req.data);
+        await tx.run(UPDATE(SalesOrderHeaders)
+          .set({
+            CustomerId: req.data.CustomerId,
+            CustomerName: req.data.CustomerName,
+            Factory: req.data.Factory,
+            OrderDate: req.data.OrderDate,
+            RequestedDate: req.data.RequestedDate,
+            Currency: req.data.Currency,
+            TotalAmount: req.data.TotalAmount,
+            Status: "Draft"
+          })
+          .where({
+            SalesOrderNo: req.data.SalesOrderNo,
+            VersionNo: req.data.VersionNo,
+            ID: req.data.ID
+          }));
+
+        await tx.run(DELETE.from(SalesOrderItems)
+          .where({
+            Header_ID: req.data.ID
+          }));
+        await tx.run(INSERT.into(SalesOrderItems).entries(
+
+          req.data.Items.map(item => ({
+
+            ID: cds.utils.uuid(),
+
+            ItemNo: item.ItemNo,
+
+            MaterialNo: item.MaterialNo,
+
+            MaterialDescription: item.MaterialDescription,
+
+            Quantity: item.Quantity,
+
+            UOM: item.UOM,
+
+            UnitPrice: item.UnitPrice,
+
+            NetAmount: item.NetAmount,
+
+            Header_ID: req.data.ID,
+
+            Header_SalesOrderNo: req.data.SalesOrderNo,
+
+            Header_VersionNo: req.data.VersionNo
+
+          }))
+
+        ));
+        //write logic to update the draft record here.
+      }
     }
     else {
-      const maxVersion = await SELECT.one`max(VersionNo) as maxVersion`.from(SalesOrderHeaders).where({ SalesOrderNo: req.data.SalesOrderNo });
-      if (maxVersion.maxVersion === req.data.VersionNo) {
-        console.log(JSON.stringify(req.data.Items, null, 2));
-        console.log('new');
+      if (req.user.is("Buyer")) {
+        console.log('HP Buyer is updating the record');
+        await tx.run(UPDATE(SalesOrderHeaders)
+          .set({
+            CustomerId: req.data.CustomerId,
+            CustomerName: req.data.CustomerName,
+            Factory: req.data.Factory,
+            OrderDate: req.data.OrderDate,
+            RequestedDate: req.data.RequestedDate,
+            Currency: req.data.Currency,
+            TotalAmount: req.data.TotalAmount,
+            Status: "Submitted"
+          })
+          .where({
+            SalesOrderNo: req.data.SalesOrderNo,
+            VersionNo: req.data.VersionNo,
+            ID: req.data.ID
+          }));
 
-        await tx.run(INSERT.into(SalesOrderHeaders).entries({
-          SalesOrderNo: req.data.SalesOrderNo,
-          VersionNo: req.data.VersionNo + 1,
-          Status: 'OnHold',
-          ID: newId,
-          CustomerId: req.data.CustomerId,
-          CustomerName: req.data.CustomerName,
-          Factory: req.data.Factory,
-          OrderDate: req.data.OrderDate,
-          RequestedDate: req.data.RequestedDate,
-          Currency: req.data.Currency,
-          TotalAmount: req.data.TotalAmount,
-          Items: req.data.Items.map(item => ({
+        await tx.run(DELETE.from(SalesOrderItems)
+          .where({
+            Header_ID: req.data.ID
+          }));
+        await tx.run(INSERT.into(SalesOrderItems).entries(
+
+          req.data.Items.map(item => ({
+
             ID: cds.utils.uuid(),
+
             ItemNo: item.ItemNo,
+
             MaterialNo: item.MaterialNo,
+
             MaterialDescription: item.MaterialDescription,
+
             Quantity: item.Quantity,
+
             UOM: item.UOM,
+
             UnitPrice: item.UnitPrice,
-            NetAmount: item.NetAmount
+
+            NetAmount: item.NetAmount,
+
+            Header_ID: req.data.ID,
+
+            Header_SalesOrderNo: req.data.SalesOrderNo,
+
+            Header_VersionNo: req.data.VersionNo
+
           }))
-        }));
 
-      } else {
-        req.error(400, 'There is already a changed version available. Please refresh and try again.');
+        ));
+        return {
+          ID: req.data.ID,
+          SalesOrderNo: req.data.SalesOrderNo,
+          VersionNo: req.data.VersionNo
+        };
       }
-      return {
-        ID: newId,
-        SalesOrderNo: req.data.SalesOrderNo,
-        VersionNo: req.data.VersionNo + 1
-      };
+      else {
+        const maxVersion = await SELECT.one`max(VersionNo) as maxVersion`.from(SalesOrderHeaders).where({ SalesOrderNo: req.data.SalesOrderNo });
+        if (maxVersion.maxVersion === req.data.VersionNo) {
+          console.log(JSON.stringify(req.data.Items, null, 2));
+          console.log('new');
 
+          await tx.run(INSERT.into(SalesOrderHeaders).entries({
+            SalesOrderNo: req.data.SalesOrderNo,
+            VersionNo: req.data.VersionNo + 1,
+            Status: 'OnHold',
+            ID: newId,
+            CustomerId: req.data.CustomerId,
+            CustomerName: req.data.CustomerName,
+            Factory: req.data.Factory,
+            OrderDate: req.data.OrderDate,
+            RequestedDate: req.data.RequestedDate,
+            Currency: req.data.Currency,
+            TotalAmount: req.data.TotalAmount,
+            Items: req.data.Items.map(item => ({
+              ID: cds.utils.uuid(),
+              ItemNo: item.ItemNo,
+              MaterialNo: item.MaterialNo,
+              MaterialDescription: item.MaterialDescription,
+              Quantity: item.Quantity,
+              UOM: item.UOM,
+              UnitPrice: item.UnitPrice,
+              NetAmount: item.NetAmount
+            }))
+          }));
+
+        } else {
+          req.error(400, 'There is already a changed version available. Please refresh and try again.');
+        }
+        return {
+          ID: newId,
+          SalesOrderNo: req.data.SalesOrderNo,
+          VersionNo: req.data.VersionNo + 1
+        };
+
+      }
     }
   });
-
-  // srv.on('UPDATE', 'SalesOrderHeaders.drafts', async (req) => {
-  //  // req.data.VersionNo = req.data.VersionNo + 1;
-
-  // });
-
   srv.on('approve', SalesOrderHeaders, async (req) => {
     console.log('APPROVE RECORDS HAS TO BE CREATED', req.params[0]);
     const updateDataHeader = await SELECT.from(SalesOrderHeaders).where({ SalesOrderNo: req.params[0].SalesOrderNo, VersionNo: req.params[0].VersionNo });
@@ -203,12 +308,6 @@ module.exports = cds.service.impl(async function (srv) {
     await DELETE.from(SalesOrderHeaders).where({ Status: 'Rejected', VersionNo: 2 });
   }
   )
-  // srv.before('READ', SalesOrderHeaders, async (data) => {
-  //   //delete records where status is OnHold and version is not 1
-  //   await DELETE.from(SalesOrderHeaders).where({ Status: 'Approved', VersionNo: 2 });
-  //   console.log('Deleted records where status is Approved and version is 2');
-
-  // });
   srv.after('READ', SalesOrderHeaders, async (data) => {
     if (!Array.isArray(data)) return;
     const latestVersions = {};
@@ -263,4 +362,55 @@ module.exports = cds.service.impl(async function (srv) {
       email: req.user.id
     };
   });
-});
+
+  srv.on("CREATE", SalesOrderHeaders, async (req) => {
+    const newId = cds.utils.uuid();
+    const tx = cds.transaction(req);
+
+    const { maxNumber } =
+      await SELECT.one`max(SalesOrderNo) as maxNumber`
+        .from(SalesOrderHeaders);
+
+    const newSalesOrderNo = !maxNumber ? 10000000 : Number(maxNumber) + 1;
+
+    const status = req.data.isDraft ? "Draft" : "Submitted";
+    console.log('Creating new Sales Order with Status Draft:', req.data);
+
+
+    await tx.run(INSERT.into(SalesOrderHeaders).entries(
+      {
+        SalesOrderNo: newSalesOrderNo,
+        VersionNo: 1,
+        Status: status,
+        ID: newId,
+        CustomerId: req.data.CustomerId,
+        CustomerName: req.data.CustomerName,
+        Factory: req.data.Factory,
+        OrderDate: req.data.OrderDate,
+        RequestedDate: req.data.RequestedDate,
+        Currency: req.data.Currency,
+        TotalAmount: req.data.TotalAmount
+      }
+    ));
+    await tx.run(INSERT.into(SalesOrderItems).entries(req.data.Items.map(item => ({
+      ID: cds.utils.uuid(),
+      ItemNo: item.ItemNo,
+      MaterialNo: item.MaterialNo,
+      MaterialDescription: item.MaterialDescription,
+      Quantity: item.Quantity,
+      UOM: item.UOM,
+      UnitPrice: item.UnitPrice,
+      NetAmount: item.NetAmount,
+      Header_ID: newId,
+      Header_SalesOrderNo: newSalesOrderNo,
+      Header_VersionNo: 1
+    }))));
+
+
+    return {
+      ID: newId,
+      SalesOrderNo: newSalesOrderNo,
+      VersionNo: 1
+    };
+  })
+})

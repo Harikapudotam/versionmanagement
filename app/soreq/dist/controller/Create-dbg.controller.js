@@ -55,6 +55,8 @@ sap.ui.define([
             if (oData.RequestedDate) {
                 oData.RequestedDate = new Date(oData.RequestedDate);
             }
+            oData.isDraft = true;
+            console.log(oData);
 
             oODataModel.create("/SalesOrderHeaders", oData, {
                 success: function () {
@@ -88,6 +90,42 @@ sap.ui.define([
             });
 
             this.getOwnerComponent().getRouter().navTo("RouteSO");
-        }
+        },
+        onSubmit: function () {
+            console.log('save clicked');
+
+            var oData = this.getView().getModel("createModel").getData();
+            var oODataModel = this.getView().getModel();
+
+            console.log(oODataModel);
+
+            if (oData.OrderDate) {
+                oData.OrderDate = new Date(oData.OrderDate);
+            }
+
+            if (oData.RequestedDate) {
+                oData.RequestedDate = new Date(oData.RequestedDate);
+            }
+            oData.isDraft = false;
+            console.log(oData);
+            oODataModel.create("/SalesOrderHeaders", oData, {
+                success: function () {
+
+                    sap.m.MessageToast.show("Created successfully");
+
+                    oODataModel.refresh(true);
+
+                    this.getOwnerComponent()
+                        .getRouter()
+                        .navTo("RouteSO");
+
+                }.bind(this),
+
+                error: function (oError) {
+                    console.error(oError);
+                    sap.m.MessageBox.error("Creation failed");
+                }
+            });
+        },
     });
 });

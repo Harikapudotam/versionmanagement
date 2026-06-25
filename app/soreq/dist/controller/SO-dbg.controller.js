@@ -10,23 +10,14 @@ sap.ui.define([
 
 
         onInit: function () {
+            console.log("SO Controller Initialized");
             var oRoleModel = new JSONModel({
                 role: ""
             });
-
             this.getOwnerComponent().setModel(oRoleModel, "roleModel");
             console.log("MODEL", this.getView().getModel());
-
-
-
-            console.log(
-    "Component Model",
-    this.getOwnerComponent().getModel()
-);
             this.getOwnerComponent().getModel().callFunction("/whoAmI", {
-
                 method: "GET",
-
                 success: function (oData) {
                     console.log("whoAmI Response:", oData);
                     console.log("User Role:", oData.whoAmI.role);
@@ -39,6 +30,7 @@ sap.ui.define([
                 }.bind(this),
 
                 error: function (oError) {
+                    console.log("Error in whoAmI:", oError);
                     console.error(oError);
                 }
             });

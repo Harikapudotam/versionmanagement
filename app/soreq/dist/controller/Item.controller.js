@@ -1,0 +1,2 @@
+sap.ui.define(["sap/ui/core/mvc/Controller"],function(e){"use strict";return e.extend("ust.so.soreq.controller.Item",{onInit:function(){this.getOwnerComponent().getRouter().getRoute("Item").attachPatternMatched(this._onRouteMatched,this)},_onRouteMatched:function(e){var t=e.getParameter("arguments").ID;var n="/SalesOrderItems(guid'"+t+"')";this.getView().bindElement({path:n,parameters:{expand:"Header"}})}})});
+//# sourceMappingURL=Item.controller.js.map

@@ -133,6 +133,11 @@
 					"target": [
 						"TargetCreate"
 					]
+				},
+				{
+					"name": "Item",
+					"pattern": "Item/{ID}",
+					"target": "TargetItem"
 				}
 			],
 			"targets": {
@@ -147,6 +152,10 @@
 				"TargetCreate": {
 					"id": "Create",
 					"name": "Create"
+				},
+				"TargetItem": {
+					"id": "Item",
+					"name": "Item"
 				}
 			}
 		},
