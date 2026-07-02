@@ -3,6 +3,10 @@
   "tenant-mode": "dedicated",
   "scopes": [
     {
+      "name": "$XSAPPNAME.Admin",
+      "description": "Admin Scope"
+    },
+    {
       "name": "$XSAPPNAME.Customer",
       "description": "Customer Scope"
     },
@@ -12,6 +16,13 @@
     }
   ],
   "role-templates": [
+    {
+      "name": "Admin",
+      "description": "Admin Role",
+      "scope-references": [
+        "$XSAPPNAME.Admin"
+      ]
+    },
     {
       "name": "Customer",
       "description": "Customer Role",

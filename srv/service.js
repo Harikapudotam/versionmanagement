@@ -4,14 +4,16 @@ const { INSERT, SELECT, UPDATE, DELETE } = require('@sap/cds/lib/ql/cds-ql');
 //const { buildSOTable } = require("./utils/template");
 //const { getDestination } = require('@sap-cloud-sdk/connectivity');
 module.exports = cds.service.impl(async function (srv) {
-  const { SalesOrderHeaders, SalesOrderItems } = srv.entities;
-  srv.before('CREATE', SalesOrderHeaders, async (req) => {
-    const { maxNumber } = await SELECT.one`max(SalesOrderNo) as maxNumber`.from(SalesOrderHeaders);
-    let iNewNo = (!maxNumber ? 10000000 : Number(maxNumber) + 1);
-    req.data.VersionNo = 1;
-    req.data.Status = 'Submitted';
-    req.data.SalesOrderNo = iNewNo;
-  });
+  const { SalesOrderHeaders, SalesOrderItems, UserAccess } = srv.entities;
+  async function getUserAccess(userId) {
+    //replace harikapudota28@gmail.com with req.user.id to get the actual user email before deployment
+    const access = await SELECT.from(UserAccess).where({ iasSubject: userId, isActive: true });
+    if (access.length < 0) {
+      return req.reject(403, 'User does not have access to this service.');
+    }
+    return access[0];
+  }
+
   srv.before('NEW', 'SalesOrderHeaders.drafts', async (req) => {
     const { maxNumber } = await SELECT.one`max(SalesOrderNo) as maxNumber`.from(SalesOrderHeaders);
     let iNewNo = (!maxNumber ? 1 : Number(maxNumber) + 1);
@@ -19,97 +21,167 @@ module.exports = cds.service.impl(async function (srv) {
     req.data.Status = 'Draft';
     req.data.SalesOrderNo = iNewNo;
   });
-  srv.after('READ', SalesOrderHeaders, async (data) => {
-    const records = Array.isArray(data) ? data : [data];
-    for (const record of records) {
-      record.CanApprove = false;
-      record.CanReject = false;
-      if (record.Status === 'OnHold') {
-        record.CanApprove = true;
-        record.CanReject = true;
-      }
-    }
-  });
-  srv.on('UPDATE', SalesOrderHeaders, async (req) => {
-    console.log('NEW RECORDS HAS TO BE CREATED')
-    const newId = cds.utils.uuid();
-    console.log(req.data);
+
+  srv.on("UPDATE", SalesOrderHeaders, async (req) => {
+
+    console.log("UPDATE Sales Order");
+
     const tx = cds.transaction(req);
+    const newId = cds.utils.uuid();
+    if (req.user.is("Admin")) {
 
-    //have to insert a new record here.
-    //need to check if it is HP buyer it has to be updated else a new record will be created . need to write a if condition to check whether the user who has update is HP buyer or not. If HP buyer made changes to the initial record directly else create a new record
-    console.log('User role:', req.user.roles);
-    //checking if any changed version is there: 
-    //if no changed version , we can create , else throw an error message to user that there is already a changed version available. 
-    if (req.user.is("Buyer")) {
-      console.log('HP Buyer is updating the record');
-      await tx.run(UPDATE(SalesOrderHeaders)
-        .set({
-          CustomerId: req.data.CustomerId,
-          CustomerName: req.data.CustomerName,
-          Factory: req.data.Factory,
-          OrderDate: req.data.OrderDate,
-          RequestedDate: req.data.RequestedDate,
-          Currency: req.data.Currency,
-          TotalAmount: req.data.TotalAmount,
-          Status: "Submitted"
-        })
-        .where({
-          SalesOrderNo: req.data.SalesOrderNo,
-          VersionNo: req.data.VersionNo,
-          ID: req.data.ID
-        }));
+      await tx.run(
+        UPDATE(SalesOrderHeaders)
+          .set({
+            CustomerId: req.data.CustomerId,
+            CustomerName: req.data.CustomerName,
+            Factory: req.data.Factory,
+            OrderDate: req.data.OrderDate,
+            RequestedDate: req.data.RequestedDate,
+            Currency: req.data.Currency,
+            TotalAmount: req.data.TotalAmount,
+            Status: req.data.Status,
+            companyCode: req.data.companyCode,
+            project: req.data.project
+          })
+          .where({
+            ID: req.data.ID,
+            SalesOrderNo: req.data.SalesOrderNo,
+            VersionNo: req.data.VersionNo
+          })
+      );
 
-      await tx.run(DELETE.from(SalesOrderItems)
-        .where({
+      await tx.run(
+        DELETE.from(SalesOrderItems).where({
           Header_ID: req.data.ID
-        }));
-      await tx.run(INSERT.into(SalesOrderItems).entries(
+        })
+      );
 
-        req.data.Items.map(item => ({
-
-          ID: cds.utils.uuid(),
-
-          ItemNo: item.ItemNo,
-
-          MaterialNo: item.MaterialNo,
-
-          MaterialDescription: item.MaterialDescription,
-
-          Quantity: item.Quantity,
-
-          UOM: item.UOM,
-
-          UnitPrice: item.UnitPrice,
-
-          NetAmount: item.NetAmount,
-
-          Header_ID: req.data.ID,
-
-          Header_SalesOrderNo: req.data.SalesOrderNo,
-
-          Header_VersionNo: req.data.VersionNo
-
-        }))
-
-      ));
+      await tx.run(
+        INSERT.into(SalesOrderItems).entries(
+          req.data.Items.map(item => ({
+            ID: cds.utils.uuid(),
+            ItemNo: item.ItemNo,
+            MaterialNo: item.MaterialNo,
+            MaterialDescription: item.MaterialDescription,
+            Quantity: item.Quantity,
+            UOM: item.UOM,
+            UnitPrice: item.UnitPrice,
+            NetAmount: item.NetAmount,
+            Header_ID: req.data.ID,
+            Header_SalesOrderNo: req.data.SalesOrderNo,
+            Header_VersionNo: req.data.VersionNo
+          }))
+        )
+      );
       return {
         ID: req.data.ID,
         SalesOrderNo: req.data.SalesOrderNo,
         VersionNo: req.data.VersionNo
       };
     }
-    else {
-      const maxVersion = await SELECT.one`max(VersionNo) as maxVersion`.from(SalesOrderHeaders).where({ SalesOrderNo: req.data.SalesOrderNo });
-      if (maxVersion.maxVersion === req.data.VersionNo) {
-        console.log(JSON.stringify(req.data.Items, null, 2));
-        console.log('new');
 
-        await tx.run(INSERT.into(SalesOrderHeaders).entries({
+    // -------------------------
+    // Common Access Validation
+    // -------------------------
+    const userId = req.user.id;
+
+    const access = await getUserAccess(userId);
+
+    if (!access) {
+      return req.reject(403, "User does not have access to this service.");
+    }
+
+    const companies = access.companies.split(",").map(c => c.trim());
+    const projects = access.projects.split(",").map(p => p.trim());
+
+    if (
+      !companies.includes(req.data.companyCode) ||
+      !projects.includes(req.data.project)
+    ) {
+      return req.reject(403, "Requisition outside your access scope");
+    }
+    // ==========================================================
+    // BUYER -> Update existing version
+    // ==========================================================
+    if (req.user.is("Buyer")) {
+
+      await tx.run(
+        UPDATE(SalesOrderHeaders)
+          .set({
+            CustomerId: req.data.CustomerId,
+            CustomerName: req.data.CustomerName,
+            Factory: req.data.Factory,
+            OrderDate: req.data.OrderDate,
+            RequestedDate: req.data.RequestedDate,
+            Currency: req.data.Currency,
+            TotalAmount: req.data.TotalAmount,
+            Status: "Submitted",
+            companyCode: req.data.companyCode,
+            project: req.data.project
+          })
+          .where({
+            ID: req.data.ID,
+            SalesOrderNo: req.data.SalesOrderNo,
+            VersionNo: req.data.VersionNo
+          })
+      );
+
+      await tx.run(
+        DELETE.from(SalesOrderItems).where({
+          Header_ID: req.data.ID
+        })
+      );
+
+      await tx.run(
+        INSERT.into(SalesOrderItems).entries(
+          req.data.Items.map(item => ({
+            ID: cds.utils.uuid(),
+            ItemNo: item.ItemNo,
+            MaterialNo: item.MaterialNo,
+            MaterialDescription: item.MaterialDescription,
+            Quantity: item.Quantity,
+            UOM: item.UOM,
+            UnitPrice: item.UnitPrice,
+            NetAmount: item.NetAmount,
+            Header_ID: req.data.ID,
+            Header_SalesOrderNo: req.data.SalesOrderNo,
+            Header_VersionNo: req.data.VersionNo
+          }))
+        )
+      );
+
+      return {
+        ID: req.data.ID,
+        SalesOrderNo: req.data.SalesOrderNo,
+        VersionNo: req.data.VersionNo
+      };
+    }
+    // ==========================================================
+    // CUSTOMER -> Create new version
+    // ==========================================================
+    if (req.user.is("Customer")) {
+
+      const maxVersion =
+        await SELECT.one`max(VersionNo) as maxVersion`
+          .from(SalesOrderHeaders)
+          .where({
+            SalesOrderNo: req.data.SalesOrderNo
+          });
+
+      if (maxVersion.maxVersion !== req.data.VersionNo) {
+        return req.reject(
+          400,
+          "There is already a changed version available. Please refresh and try again."
+        );
+      }
+
+      await tx.run(
+        INSERT.into(SalesOrderHeaders).entries({
+          ID: newId,
           SalesOrderNo: req.data.SalesOrderNo,
           VersionNo: req.data.VersionNo + 1,
-          Status: 'OnHold',
-          ID: newId,
+          Status: "OnHold",
           CustomerId: req.data.CustomerId,
           CustomerName: req.data.CustomerName,
           Factory: req.data.Factory,
@@ -117,6 +189,8 @@ module.exports = cds.service.impl(async function (srv) {
           RequestedDate: req.data.RequestedDate,
           Currency: req.data.Currency,
           TotalAmount: req.data.TotalAmount,
+          companyCode: req.data.companyCode,
+          project: req.data.project,
           Items: req.data.Items.map(item => ({
             ID: cds.utils.uuid(),
             ItemNo: item.ItemNo,
@@ -127,32 +201,43 @@ module.exports = cds.service.impl(async function (srv) {
             UnitPrice: item.UnitPrice,
             NetAmount: item.NetAmount
           }))
-        }));
+        })
+      );
 
-      } else {
-        req.error(400, 'There is already a changed version available. Please refresh and try again.');
-      }
       return {
         ID: newId,
         SalesOrderNo: req.data.SalesOrderNo,
         VersionNo: req.data.VersionNo + 1
       };
-
     }
+    return req.reject(403, "Unauthorized role.");
   });
 
-  // srv.on('UPDATE', 'SalesOrderHeaders.drafts', async (req) => {
-  //  // req.data.VersionNo = req.data.VersionNo + 1;
-
-  // });
-
   srv.on('approve', SalesOrderHeaders, async (req) => {
+    const userId = req.user.id || "harikapudota28@gmail.com";
     console.log('APPROVE RECORDS HAS TO BE CREATED', req.params[0]);
+    //check first is it the admin or approver
+    if (!req.user.is('Buyer') && !req.user.is('Admin'))
+      return req.reject(403, 'Insufficient role');
+    //Approver only from their scope records to be approved.
+
     const updateDataHeader = await SELECT.from(SalesOrderHeaders).where({ SalesOrderNo: req.params[0].SalesOrderNo, VersionNo: req.params[0].VersionNo });
     const updateDataItems = await SELECT.from(SalesOrderItems).where({ Header_ID: req.params[0].ID });
     const headerId = await SELECT.one`ID`.from(SalesOrderHeaders).where({ SalesOrderNo: req.params[0].SalesOrderNo, VersionNo: 1 });
     console.log(updateDataHeader);
     console.log(updateDataHeader.CustomerId);
+    if (!req.user.is('Admin')) {
+      const access = await getUserAccess(userId);
+      console.log('User Access:', access);
+      const companies = access.companies.split(',').map(s => s.trim());
+
+      const projects = access.projects.split(',').map(s => s.trim());
+      if (!companies.includes(updateDataHeader[0].companyCode) || !projects.includes(updateDataHeader[0].project))
+
+        return req.reject(403, 'Requisition outside your access scope');
+
+    }
+
     await UPDATE(SalesOrderHeaders).set({ Status: 'Approved' }).where({ SalesOrderNo: req.params[0].SalesOrderNo, VersionNo: req.params[0].VersionNo });
     await UPDATE(SalesOrderHeaders)
       .set({
@@ -250,17 +335,204 @@ module.exports = cds.service.impl(async function (srv) {
   });
 
   srv.on("whoAmI", async (req) => {
-
-    let role = "CUSTOMER";
-
-    console.log('roles', req.user.roles);
-    if (req.user.is("Buyer")) {
-      role = "HP_BUYER";
+    if (req.user.is("Admin")) {
+      role = "Admin";
+    } else if (req.user.is("Buyer")) {
+      role = "Buyer";
+    } else if (req.user.is("Customer")) {
+      role = "Customer";
     }
-
     return {
       role: role,
       email: req.user.id
     };
+  });
+
+  //users only see allowed data. admins can see all data , for approvers they can the requesters data in their project and company. For requesters they can see their own data in their project and company.  
+  srv.before("READ", SalesOrderHeaders, async (req) => {
+
+    const userId = req.user.id;
+
+    // Admin -> all records
+    if (req.user.is("Admin")) {
+      return;
+    }
+
+    // Customer -> only own records
+    if (req.user.is("Customer")) {
+      req.query.where({
+        createdBy: userId
+      });
+      return;
+    }
+
+    // Buyer -> validate access and filter
+    if (req.user.is("Buyer")) {
+
+      const access = await getUserAccess(userId);
+
+      if (!access) {
+        return req.reject(403, "User does not have access.");
+      }
+
+      const companies = (access.companies || "")
+        .split(",")
+        .map(c => c.trim())
+        .filter(Boolean);
+
+      const projects = (access.projects || "")
+        .split(",")
+        .map(p => p.trim())
+        .filter(Boolean);
+
+      if (!companies.length || !projects.length) {
+        return req.reject(403, "No data access assigned.");
+      }
+
+      req.query.where({
+        companyCode: { in: companies },
+        project: { in: projects }
+      });
+
+      return;
+    }
+
+    return req.reject(403, "Unauthorized role.");
+  });
+
+  // ─── CREATE: validate company + project against UserAccess ───────── 
+  srv.before('CREATE', SalesOrderHeaders, async (req) => {
+    const { maxNumber } = await SELECT.one`max(SalesOrderNo) as maxNumber`.from(SalesOrderHeaders);
+    let iNewNo = (!maxNumber ? 10000000 : Number(maxNumber) + 1);
+    req.data.VersionNo = 1;
+    req.data.Status = 'Submitted';
+    req.data.SalesOrderNo = iNewNo;
+
+    //1.check if it is admin
+
+    if (req.user.is('Admin')) {
+      req.data.createdBy = req.user.id;
+      return;
+
+    }
+    const access = await getUserAccess(req.user.id);
+    if (!access) {
+      return req.reject(403, 'User does not have access to this service.');
+    }
+    //filtering companies and projects based on user access. If the company or project is not in the user's access list, reject the request.  
+    const companies = access.companies.split(',').map(c => c.trim());
+    const projects = access.projects.split(',').map(p => p.trim());
+
+
+    if (!companies.includes(req.data.companyCode)) {
+      return req.reject(403, 'User does not have access to this company.');
+    }
+
+    if (!projects.includes(req.data.project)) {
+      return req.reject(403, 'User does not have access to this project.');
+    }
+
+    if (req.user.is('Buyer')) {
+      return req.reject(403, 'Buyer cannot create');
+    }
+
+
+
+  });
+
+  srv.on('getCompanyCodes', async (req) => {
+    if (req.user.is("Admin")) {
+
+      const companies = await SELECT.distinct
+        .from(UserAccess)
+        .columns("companies")
+        .where({ companies: { "!=": null } });
+
+      const result = await SELECT.from(UserAccess).columns("companies");
+
+      const companySet = new Set();
+
+      result.forEach(row => {
+
+        if (row.companies) {
+          row.companies
+            .split(",")
+            .map(c => c.trim())
+            .forEach(c => companySet.add(c));
+        }
+
+      });
+
+      return [...companySet].map(c => ({
+        value: c
+      }));
+    }
+
+    const user = req.user.id;
+    // const user = "pudota.maryharika@ust.com"
+
+    const access = await SELECT.one.from(UserAccess).where({
+      iasSubject: user,
+      isActive: true
+    });
+
+    console.log('User Access:', access);
+
+    if (!access) {
+      return [];
+    }
+
+    return access.companies
+      .split(",")
+      .map(c => ({
+        value: c.trim()
+      }));
+
+  });
+
+  srv.on("getProjects", async (req) => {
+
+
+
+    if (req.user.is("Admin")) {
+
+      const result = await SELECT.from(UserAccess)
+        .columns("projects");
+
+      const projectSet = new Set();
+
+      result.forEach(row => {
+
+        if (row.projects) {
+          row.projects
+            .split(",")
+            .map(p => p.trim())
+            .filter(p => p)
+            .forEach(p => projectSet.add(p));
+        }
+
+      });
+
+      return [...projectSet]
+        .sort()
+        .map(p => ({
+          value: p
+        }));
+    }
+
+    const access = await SELECT.one.from(UserAccess).where({
+      iasSubject: req.user.id,
+      isActive: true
+    });
+
+    if (!access || !access.projects) {
+      return [];
+    }
+
+    return access.projects
+      .split(",")
+      .map(p => ({
+        value: p.trim()
+      }));
   });
 });

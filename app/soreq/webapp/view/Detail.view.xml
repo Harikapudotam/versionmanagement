@@ -32,7 +32,7 @@
                 press="onApprove"
                 visible="{=
         ${Status} === 'OnHold'
-        &amp;&amp; ${roleModel>/role} === 'HP_BUYER'
+        &amp;&amp; (${roleModel>/role} === 'Buyer' || ${roleModel>/role} === 'Admin')
     }"
             />
 
@@ -43,7 +43,7 @@
                 press="onReject"
                 visible="{=
         ${Status} === 'OnHold'
-        &amp;&amp; ${roleModel>/role} === 'HP_BUYER'
+        &amp;&amp; (${roleModel>/role} === 'Buyer' || ${roleModel>/role} === 'Admin')
     }"
             />
             <Button
@@ -121,6 +121,32 @@
                                         editable="{viewModel>/editMode}"
                                         displayFormat="dd/MM/yyyy"
                                     />
+
+                                    <Label
+                                        id="_IDGenLabel20"
+                                        text="Company Code"
+                                    />
+                                    <Input
+                                        id="_IDGenInput27"
+                                        width="200px"
+                                        value="{companyCode}"
+                                        editable="{viewModel>/editMode}"
+                                        showValueHelp="true"
+                                        valueHelpRequest=".onCompanyValueHelp"
+                                    />
+
+                                    <Label
+                                        id="_IDGenLabel21"
+                                        text="Project"
+                                    />
+                                    <Input
+                                        id="_IDGenInput28"
+                                        width="200px"
+                                        value="{project}"
+                                        editable="{viewModel>/editMode}"
+                                        showValueHelp="true"
+                                        valueHelpRequest=".onProjectValueHelp"
+                                    />
                                 </f:content>
                             </f:SimpleForm>
                         </VBox>
@@ -172,10 +198,11 @@
                                     text="Status"
                                     width="200px"
                                 />
-                                <Text
-                                    id="_IDGenText14"
+                                <Input
+                                    id="_IDGenInput19"
                                     width="200px"
-                                    text="{Status}"
+                                    value="{Status}"
+                                    editable="{= ${viewModel>/editMode}  &amp;&amp; ${roleModel>/role} === 'Admin' }"
                                 />
                             </f:content>
                         </f:SimpleForm>
@@ -229,10 +256,10 @@
                 </columns>
 
                 <items>
-                    <ColumnListItem id="_IDGenColumnListItem1"
-    
-        type="Navigation"
-        press="onItemPress"
+                    <ColumnListItem
+                        id="_IDGenColumnListItem1"
+                        type="Navigation"
+                        press="onItemPress"
                     >
                         <cells>
                             <Input
@@ -273,8 +300,6 @@
                         </cells>
                     </ColumnListItem>
                 </items>
-
-               
             </Table>
         </content>
     </Page>

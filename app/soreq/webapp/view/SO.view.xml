@@ -16,7 +16,6 @@
                 entitySet="SalesOrderHeaders"
                 persistencyKey="SmartFilter_Explored"
                 basicSearchFieldName="SalesOrderNo"
-                enableBasicSearch="true"
             >
                 <smartFilterBar:controlConfiguration>
                     <smartFilterBar:ControlConfiguration
@@ -39,7 +38,8 @@
                 </smartFilterBar:controlConfiguration>
             </smartFilterBar:SmartFilterBar>
 
-            <smartTable:SmartTable id="_IDGenSmartTable"
+            <smartTable:SmartTable
+                id="_IDGenSmartTable"
                 entitySet="SalesOrderHeaders"
                 smartFilterId="smartFilterBar"
                 tableType="ResponsiveTable"
@@ -52,7 +52,7 @@
                 enableAutoColumnWidth="true"
                 class="sapUiResponsiveContentPadding"
                 header="Sales Orders"
-                initiallyVisibleFields="SalesOrderNo,VersionNo,CustomerName,Factory,RequestedDate,Status,TotalAmount"
+                initiallyVisibleFields="SalesOrderNo,VersionNo,CustomerName,Factory,RequestedDate,Status,TotalAmount,CreatedAt,CreatedBy"
             >
                 <Table
                     id="_IDGenTable1"
@@ -69,21 +69,20 @@
                     </items>
                 </Table>
 
-              <smartTable:customToolbar>
-    <OverflowToolbar id="_IDGenOverflowToolbar1">
+                <smartTable:customToolbar>
+                    <OverflowToolbar id="_IDGenOverflowToolbar1">
+                        <Title id="_IDGenTitle" />
 
-        <Title id="_IDGenTitle" text="Sales Orders"/>
+                        <ToolbarSpacer id="_IDGenToolbarSpacer1" />
 
-        <ToolbarSpacer id="_IDGenToolbarSpacer"/>
-
-        <Button id="_IDGenButton2"
-            text="Create"
-            press="onCreatePress"
-            visible="{= ${roleModel>/role} === 'CUSTOMER' }"
-            />
-
-    </OverflowToolbar>
-</smartTable:customToolbar>
+                        <Button
+                            id="_IDGenButton3"
+                            text="Create"
+                            press="onCreatePress"
+                            visible="{= ${roleModel>/role} === 'Customer' || ${roleModel>/role} === 'Admin' }"
+                        />
+                    </OverflowToolbar>
+                </smartTable:customToolbar>
             </smartTable:SmartTable>
         </content>
     </Page>

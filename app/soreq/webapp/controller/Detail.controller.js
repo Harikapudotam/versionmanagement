@@ -2,8 +2,9 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/model/odata/v2/ODataModel",
     "sap/m/MessageBox",
-    "sap/m/MessageToast"
-], function (Controller, ODataModel, MessageBox, MessageToast) {
+    "sap/m/MessageToast",
+    "sap/ui/core/Fragment"
+], function (Controller, ODataModel, MessageBox, MessageToast, Fragment) {
     "use strict";
 
     return Controller.extend("ust.so.soreq.controller.Detail", {
@@ -47,11 +48,11 @@ sap.ui.define([
             this.getView()
                 .getModel("viewModel")
                 .setProperty("/editMode", false);
-                console.log("Overview Route Matched");
+            console.log("Overview Route Matched");
 
-    this.getView()
-        .getModel()
-        .refresh(true);
+            this.getView()
+                .getModel()
+                .refresh(true);
             this._sPath = sPath;
 
         },
@@ -71,8 +72,7 @@ sap.ui.define([
                 ID: oContext.getProperty("ID"),
                 SalesOrderNo: oContext.getProperty("SalesOrderNo"),
                 VersionNo: oContext.getProperty("VersionNo"),
-                Status: oContext.getProperty("Status"),
-
+                Status: this.byId("_IDGenInput19").getValue(),
                 CustomerId: this.byId("_IDGenInput7").getValue(),
                 CustomerName: this.byId("_IDGenInput8").getValue(),
                 Factory: this.byId("_IDGenInput9").getValue(),
@@ -84,6 +84,8 @@ sap.ui.define([
                 OrderDate: formatDate(
                     this.byId("_IDGenDatePicker2").getDateValue()
                 ),
+                companyCode: this.byId("_IDGenInput27").getValue(),
+                project: this.byId("_IDGenInput28").getValue(),
 
             };
 
@@ -150,7 +152,7 @@ sap.ui.define([
                     success: function () {
 
                         sap.m.MessageToast.show("Approved Successfully");
-                        
+
                         this.getOwnerComponent().getRouter().navTo(
                             "RouteSO",
                             {},
@@ -250,16 +252,143 @@ sap.ui.define([
         },
         onItemPress: function (oEvent) {
 
-    var oItem = oEvent.getSource().getBindingContext().getObject();
+            var oItem = oEvent.getSource().getBindingContext().getObject();
 
-    this.getOwnerComponent().getRouter().navTo("Item", {
-    ID: oItem.ID
-});
+            this.getOwnerComponent().getRouter().navTo("Item", {
+                ID: oItem.ID
+            });
 
-}
+        },
+        onCompanyValueHelp: async function () {
+
+            if (!this._oCompanyVH) {
+
+                this._oCompanyVH = await Fragment.load({
+                    id: this.getView().getId(),
+                    name: "ust.so.soreq.fragments.CompanyValueHelp",
+                    controller: this
+                });
+
+                this.getView().addDependent(this._oCompanyVH);
+            }
+            var oDialog = this._oCompanyVH;
+            // Create a local reference
+            var oModel = this.getView().getModel();
+
+            oModel.callFunction("/getCompanyCodes", {
+                method: "GET",
+                success: function (oData) {
+
+                    var oJsonModel = new sap.ui.model.json.JSONModel();
+                    oJsonModel.setData(oData.results);
+
+                    oDialog.setModel(oJsonModel);
+
+                    oDialog.bindAggregation("items", {
+                        path: "/",
+                        template: new sap.m.StandardListItem({
+                            title: "{value}"
+                        })
+                    });
+
+                    oDialog.open();
+                },
+                error: function (oError) {
+                    console.error(oError);
+                }
+            });
+
+            oDialog.open();
+        },
+        onCompanyConfirm: function (oEvent) {
+
+            var oSelectedItem = oEvent.getParameter("selectedItem");
+
+            if (!oSelectedItem) {
+                return;
+            }
+
+            var sCompanyCode = oSelectedItem.getTitle();
+
+            // Get the current binding context of the Sales Order
+            var oContext = this.getView().getBindingContext();
+
+            // Update the companyCode property
+            oContext.getModel().setProperty(
+                oContext.getPath() + "/companyCode",
+                sCompanyCode
+            );
+        },
+
+
+        onProjectValueHelp: async function () {
+
+            if (!this._oProjectVH) {
+
+                this._oProjectVH = await Fragment.load({
+                    id: this.getView().getId(),
+                    name: "ust.so.soreq.fragments.ProjectValueHelp",
+                    controller: this
+                });
+
+                this.getView().addDependent(this._oProjectVH);
+            }
+            var oDialog = this._oProjectVH;
+            // Create a local reference
+            var oModel = this.getView().getModel();
+
+            oModel.callFunction("/getProjects", {
+                method: "GET",
+                success: function (oData) {
+
+                    var oJsonModel = new sap.ui.model.json.JSONModel();
+                    oJsonModel.setData(oData.results);
+
+                    oDialog.setModel(oJsonModel);
+
+                    oDialog.bindAggregation("items", {
+                        path: "/",
+                        template: new sap.m.StandardListItem({
+                            title: "{value}"
+                        })
+                    });
+
+                    oDialog.open();
+                },
+                error: function (oError) {
+                    console.error(oError);
+                }
+            });
+
+            oDialog.open();
+        },
+
+
+         onProjectConfirm: function (oEvent) {
+
+            var oSelectedItem = oEvent.getParameter("selectedItem");
+
+            if (!oSelectedItem) {
+                return;
+            }
+
+            var sCompanyCode = oSelectedItem.getTitle();
+
+            // Get the current binding context of the Sales Order
+            var oContext = this.getView().getBindingContext();
+
+            // Update the companyCode property
+            oContext.getModel().setProperty(
+                oContext.getPath() + "/project",
+                sCompanyCode
+            );
+        },
+        
+        
     });
 
-    
+
+
     function formatDate(oDate) {
         if (!oDate) return null;
 
@@ -267,5 +396,5 @@ sap.ui.define([
 
         return d.toISOString().split("T")[0];
     }
-    
+
 });

@@ -70,9 +70,24 @@ modules:
             - ustsosoreq.zip
           name: ustsosoreq
           target-path: resources/
+        - artifacts:
+            - ustuauseraccess.zip
+          name: ustuauseraccess
+          target-path: resources/
   - name: ustsosoreq
     type: html5
     path: app/soreq
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms:
+        []
+  - name: ustuauseraccess
+    type: html5
+    path: app/useraccess
     build-parameters:
       build-result: dist
       builder: custom

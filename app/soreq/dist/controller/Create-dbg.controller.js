@@ -9,6 +9,11 @@ sap.ui.define([
             var oModel = new sap.ui.model.json.JSONModel();
 
             this.getView().setModel(oModel, "createModel");
+            var oVHModel = new sap.ui.model.json.JSONModel({
+                companies: [],
+                projects: []
+            });
+            this.getView().setModel(oVHModel, "vh");
 
             this.getOwnerComponent()
                 .getRouter()
@@ -24,8 +29,43 @@ sap.ui.define([
                 OrderDate: "",
                 RequestedDate: "",
                 Currency: "",
+                project: "",
+                companyCode: "",
                 Items: []
             });
+            var oODataModel = this.getView().getModel();
+
+            oODataModel.callFunction("/getCompanyCodes", {
+                method: "GET",
+                success: function (oData) {
+
+                    console.log(oData.d.results);
+
+                    this.getView()
+                        .getModel("vh")
+                        .setProperty("/companies", oData.d.results);
+
+                }.bind(this),
+
+                error: function (oError) {
+                    console.error(oError);
+                }
+            });
+            oODataModel.callFunction("/getProjects", {
+                method: "GET",
+                success: function (oData) {
+
+                    this.getView()
+                        .getModel("vh")
+                        .setProperty("/projects", oData.d.results);
+
+                }.bind(this),
+
+                error: function (oError) {
+                    console.error(oError);
+                }
+            });
+
         },
         onAddItem: function () {
 
@@ -84,10 +124,82 @@ sap.ui.define([
                 OrderDate: "",
                 RequestedDate: "",
                 Currency: "",
+                project: "",
+                companyCode: "",
                 Items: []
             });
 
             this.getOwnerComponent().getRouter().navTo("RouteSO");
+        },
+        onProjectValueHelp: function () {
+
+            if (!this._oProjectDialog) {
+
+                this._oProjectDialog = new sap.m.SelectDialog({
+                    title: "Select Project",
+                    confirm: this.onProjectConfirm.bind(this)
+                });
+
+                this._oProjectDialog.setModel(this.getView().getModel("vh"));
+
+                this._oProjectDialog.bindItems({
+                    path: "vh>/projects",
+                    template: new sap.m.StandardListItem({
+                        title: "{vh>value}"
+                    })
+                });
+
+                this.getView().addDependent(this._oProjectDialog);
+            }
+
+            this._oProjectDialog.open();
+        },
+        onCompanyCodeValueHelp: function () {
+
+            if (!this._oCompanyDialog) {
+
+                this._oCompanyDialog = new sap.m.SelectDialog({
+                    title: "Select Company Code",
+                    confirm: this.onCompanyCodeConfirm.bind(this)
+                });
+
+                this._oCompanyDialog.setModel(this.getView().getModel("vh"));
+
+                this._oCompanyDialog.bindItems({
+                    path: "vh>/companies",
+                    template: new sap.m.StandardListItem({
+                        title: "{vh>value}"
+                    })
+                });
+
+                this.getView().addDependent(this._oCompanyDialog);
+            }
+
+            this._oCompanyDialog.open();
+        },
+
+        onProjectConfirm: function (oEvent) {
+
+            var oItem = oEvent.getParameter("selectedItem");
+
+            if (oItem) {
+                this.getView()
+                    .getModel("createModel")
+                    .setProperty("/project", oItem.getTitle());
+            }
+        },
+
+        onCompanyCodeConfirm: function (oEvent) {
+
+            var oItem = oEvent.getParameter("selectedItem");
+
+            if (oItem) {
+                this.getView()
+                    .getModel("createModel")
+                    .setProperty("/companyCode", oItem.getTitle());
+            }
         }
+
+
     });
 });
