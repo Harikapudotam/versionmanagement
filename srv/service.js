@@ -4,7 +4,7 @@ const { INSERT, SELECT, UPDATE, DELETE } = require('@sap/cds/lib/ql/cds-ql');
 //const { buildSOTable } = require("./utils/template");
 //const { getDestination } = require('@sap-cloud-sdk/connectivity');
 module.exports = cds.service.impl(async function (srv) {
-  const { SalesOrderHeaders, SalesOrderItems, UserAccess,SalesOrderNoVH } = srv.entities;
+  const { SalesOrderHeaders, SalesOrderItems, UserAccess, SalesOrderNoVH } = srv.entities;
   async function getUserAccess(userId) {
     //replace harikapudota28@gmail.com with req.user.id to get the actual user email before deployment
     const access = await SELECT.from(UserAccess).where({ iasSubject: userId, isActive: true });
@@ -281,27 +281,21 @@ module.exports = cds.service.impl(async function (srv) {
     await DELETE.from(SalesOrderHeaders).where({ Status: 'Rejected', VersionNo: 2 });
   }
   )
-  // srv.before('READ', SalesOrderHeaders, async (data) => {
-  //   //delete records where status is OnHold and version is not 1
-  //   await DELETE.from(SalesOrderHeaders).where({ Status: 'Approved', VersionNo: 2 });
-  //   console.log('Deleted records where status is Approved and version is 2');
-
-  // });
-  // srv.after('READ', SalesOrderHeaders, async (data) => {
-  //   if (!Array.isArray(data)) return;
-  //   const latestVersions = {};
-  //   for (const row of data) {
-  //     const key = row.SalesOrderNo;
-  //     if (
-  //       !latestVersions[key] ||
-  //       row.VersionNo > latestVersions[key].VersionNo
-  //     ) {
-  //       latestVersions[key] = row;
-  //     }
-  //   }
-  //   data.length = 0;
-  //   data.push(...Object.values(latestVersions));
-  // });
+  srv.after('READ', SalesOrderHeaders, async (data) => {
+    if (!Array.isArray(data)) return;
+    const latestVersions = {};
+    for (const row of data) {
+      const key = row.SalesOrderNo;
+      if (
+        !latestVersions[key] ||
+        row.VersionNo > latestVersions[key].VersionNo
+      ) {
+        latestVersions[key] = row;
+      }
+    }
+    data.length = 0;
+    data.push(...Object.values(latestVersions));
+  });
 
   srv.on('sendReport', async (req) => {
 
