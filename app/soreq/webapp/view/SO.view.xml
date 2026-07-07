@@ -21,6 +21,7 @@
                     <smartFilterBar:ControlConfiguration
                         id="_IDGenControlConfiguration"
                         key="SalesOrderNo"
+                        hasTypeAhead="true"
                         visibleInAdvancedArea="true"
                     />
 

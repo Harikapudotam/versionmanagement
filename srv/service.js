@@ -4,7 +4,7 @@ const { INSERT, SELECT, UPDATE, DELETE } = require('@sap/cds/lib/ql/cds-ql');
 //const { buildSOTable } = require("./utils/template");
 //const { getDestination } = require('@sap-cloud-sdk/connectivity');
 module.exports = cds.service.impl(async function (srv) {
-  const { SalesOrderHeaders, SalesOrderItems, UserAccess } = srv.entities;
+  const { SalesOrderHeaders, SalesOrderItems, UserAccess,SalesOrderNoVH } = srv.entities;
   async function getUserAccess(userId) {
     //replace harikapudota28@gmail.com with req.user.id to get the actual user email before deployment
     const access = await SELECT.from(UserAccess).where({ iasSubject: userId, isActive: true });
@@ -14,13 +14,6 @@ module.exports = cds.service.impl(async function (srv) {
     return access[0];
   }
 
-  srv.before('NEW', 'SalesOrderHeaders.drafts', async (req) => {
-    const { maxNumber } = await SELECT.one`max(SalesOrderNo) as maxNumber`.from(SalesOrderHeaders);
-    let iNewNo = (!maxNumber ? 1 : Number(maxNumber) + 1);
-    req.data.VersionNo = 1;
-    req.data.Status = 'Draft';
-    req.data.SalesOrderNo = iNewNo;
-  });
 
   srv.on("UPDATE", SalesOrderHeaders, async (req) => {
 
@@ -294,21 +287,21 @@ module.exports = cds.service.impl(async function (srv) {
   //   console.log('Deleted records where status is Approved and version is 2');
 
   // });
-  srv.after('READ', SalesOrderHeaders, async (data) => {
-    if (!Array.isArray(data)) return;
-    const latestVersions = {};
-    for (const row of data) {
-      const key = row.SalesOrderNo;
-      if (
-        !latestVersions[key] ||
-        row.VersionNo > latestVersions[key].VersionNo
-      ) {
-        latestVersions[key] = row;
-      }
-    }
-    data.length = 0;
-    data.push(...Object.values(latestVersions));
-  });
+  // srv.after('READ', SalesOrderHeaders, async (data) => {
+  //   if (!Array.isArray(data)) return;
+  //   const latestVersions = {};
+  //   for (const row of data) {
+  //     const key = row.SalesOrderNo;
+  //     if (
+  //       !latestVersions[key] ||
+  //       row.VersionNo > latestVersions[key].VersionNo
+  //     ) {
+  //       latestVersions[key] = row;
+  //     }
+  //   }
+  //   data.length = 0;
+  //   data.push(...Object.values(latestVersions));
+  // });
 
   srv.on('sendReport', async (req) => {
 
@@ -440,6 +433,13 @@ module.exports = cds.service.impl(async function (srv) {
 
   });
 
+  srv.before(['READ,CREATE', 'UPDATE', 'DELETE'], UserAccess, async (req) => {
+    if (req.user.is('Admin')) {
+      return;
+    }
+    return req.reject(403, 'User does not have access to this service.');
+  })
+
   srv.on('getCompanyCodes', async (req) => {
     if (req.user.is("Admin")) {
 
@@ -535,4 +535,94 @@ module.exports = cds.service.impl(async function (srv) {
         value: p.trim()
       }));
   });
+  srv.on("READ", SalesOrderNoVH, async (req) => {
+
+    const userId = req.user.id;
+
+    if (req.user.is("Admin")) {
+      return SELECT.distinct.from(SalesOrderHeaders).columns("SalesOrderNo");
+    }
+
+    if (req.user.is("Customer")) {
+      return SELECT.distinct
+        .from(SalesOrderHeaders)
+        .columns("SalesOrderNo")
+        .where({ createdBy: userId });
+    }
+
+    if (req.user.is("Buyer")) {
+
+      const access = await getUserAccess(userId);
+
+      const companies = (access.companies || "")
+        .split(",")
+        .map(c => c.trim())
+        .filter(Boolean);
+
+      const projects = (access.projects || "")
+        .split(",")
+        .map(p => p.trim())
+        .filter(Boolean);
+
+      return SELECT.distinct
+        .from(SalesOrderHeaders)
+        .columns("SalesOrderNo")
+        .where({
+          companyCode: { in: companies },
+          project: { in: projects }
+        });
+    }
+
+    req.reject(403, "Unauthorized");
+  });
+
+
+  async function applyDataAccess(req) {
+
+    const userId = req.user.id;
+    //const userId = "pudota.maryharika@ust.com";
+
+    if (req.user.is("Admin")) {
+      return;
+    }
+
+    if (req.user.is("Customer")) {
+      req.query.where({
+        createdBy: userId
+      });
+      return;
+    }
+
+    if (req.user.is("Buyer")) {
+
+      const access = await getUserAccess(userId);
+      console.log('User Access:', access);
+
+      if (!access) {
+        return req.reject(403, "User does not have access.");
+      }
+
+      const companies = (access.companies || "")
+        .split(",")
+        .map(c => c.trim())
+        .filter(Boolean);
+
+      const projects = (access.projects || "")
+        .split(",")
+        .map(p => p.trim())
+        .filter(Boolean);
+
+      req.query.where({
+        companyCode: { in: companies },
+        project: { in: projects }
+      });
+    }
+    const rec = await SELECT.from(SalesOrderHeaders).columns('SalesOrderNo').where({
+      companyCode: { in: companies },
+      project: { in: projects }
+    });
+    console.log('Records:', rec);
+    return rec;
+
+  }
 });

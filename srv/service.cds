@@ -1,6 +1,6 @@
 using salesorder.db as db from '../db/model';
 
-service MyService {
+service MyService  {
 
 
     //  @restrict: [
@@ -18,6 +18,9 @@ service MyService {
 
     entity SalesOrderItems   as projection on db.SalesOrderItem;
     entity UserAccess        as projection on db.UserAccess;
+    entity SalesOrderNoVH as projection on SalesOrderHeaders {
+    key SalesOrderNo
+};
     action   sendReport()      returns String;
 
     function whoAmI()          returns {
