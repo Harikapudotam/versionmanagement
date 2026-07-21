@@ -1,6 +1,6 @@
 using salesorder.db as db from '../db/model';
 
-service MyService  {
+service MyService {
 
 
     //  @restrict: [
@@ -8,7 +8,7 @@ service MyService  {
     //     { grant: ['READ','WRITE'], to: 'Buyer' },
     //     { grant: ['*'], to: 'Admin' }
     //   ]
-
+    @cds.redirection.target
     entity SalesOrderHeaders as projection on db.SalesOrderHeader
         actions {
             action approve();
@@ -18,9 +18,16 @@ service MyService  {
 
     entity SalesOrderItems   as projection on db.SalesOrderItem;
     entity UserAccess        as projection on db.UserAccess;
-    entity SalesOrderNoVH as projection on SalesOrderHeaders {
-    key SalesOrderNo
-};
+
+    @cds.search: {SalesOrderNo}
+    entity SalesOrderNoVH    as
+        projection on db.SalesOrderHeader {
+            key SalesOrderNo,
+                createdBy,
+                companyCode,
+                project
+        };
+
     action   sendReport()      returns String;
 
     function whoAmI()          returns {
@@ -61,3 +68,18 @@ annotate MyService.SalesOrderHeaders with @UI.LineItem: [
     {Value: Status},
     {Value: TotalAmount}
 ];
+
+
+// annotate MyService.SalesOrderHeaders with {
+
+//     SalesOrderNo @(Common.ValueList: {
+//         CollectionPath : 'SalesOrderNoVH',
+//         SearchSupported: true,
+//         Parameters     : [{
+//             $Type            : 'Common.ValueListParameterInOut',
+//             LocalDataProperty: SalesOrderNo,
+//             ValueListProperty: 'SalesOrderNo'
+//         }]
+//     });
+
+// };

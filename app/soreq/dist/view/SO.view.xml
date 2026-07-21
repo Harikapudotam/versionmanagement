@@ -28,6 +28,7 @@
                     <smartFilterBar:ControlConfiguration
                         id="_IDGenControlConfiguration1"
                         key="CustomerName"
+                        hasTypeAhead="true"
                         visibleInAdvancedArea="true"
                     />
 

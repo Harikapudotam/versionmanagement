@@ -1,17 +1,31 @@
 using MyService as service from '../../srv/service';
 
-annotate service.SalesOrderHeaders with @cds.search
- {
+annotate service.SalesOrderHeaders with {
 
-    SalesOrderNo @(
-        Common.ValueList : {
-            CollectionPath : 'SalesOrderNoVH',
-            SearchSupported : true,
-            Parameters : [
+    CustomerName @(
+        Common.ValueList: {
+            CollectionPath: 'SalesOrderHeaders',
+            SearchSupported: true,
+            Parameters: [
                 {
-                    $Type : 'Common.ValueListParameterInOut',
-                    LocalDataProperty : SalesOrderNo,
-                    ValueListProperty : 'SalesOrderNo'
+                    $Type: 'Common.ValueListParameterInOut',
+                    LocalDataProperty: CustomerName,
+                    ValueListProperty: 'CustomerName'
+                }
+            ]
+        }
+    );
+
+
+ SalesOrderNo @(
+        Common.ValueList: {
+            CollectionPath: 'SalesOrderHeaders',
+            SearchSupported: true,
+            Parameters: [
+                {
+                    $Type: 'Common.ValueListParameterInOut',
+                    LocalDataProperty: SalesOrderNo,
+                    ValueListProperty: 'SalesOrderNo'
                 }
             ]
         }

@@ -570,6 +570,66 @@ module.exports = cds.service.impl(async function (srv) {
     req.reject(403, "Unauthorized");
   });
 
+//   srv.on("READ", SalesOrderNoVH, async (req) => {
+
+//     const userId = req.user.id;
+//     const query = req.query;
+
+//     let authCondition = "";
+
+//     if (req.user.is("Admin")) {
+//         // No additional filter
+//     }
+//     else if (req.user.is("Customer")) {
+
+//         authCondition = `createdBy='${userId}'`;
+
+//     }
+//     else if (req.user.is("Buyer")) {
+
+//         const access = await getUserAccess(userId);
+
+//         const companies = (access.companies || "")
+//             .split(",")
+//             .map(x => `'${x.trim()}'`)
+//             .filter(Boolean)
+//             .join(",");
+
+//         const projects = (access.projects || "")
+//             .split(",")
+//             .map(x => `'${x.trim()}'`)
+//             .filter(Boolean)
+//             .join(",");
+
+//         authCondition =
+//             `companyCode in (${companies}) and project in (${projects})`;
+
+//     }
+//     else {
+//         return req.reject(403, "Unauthorized");
+//     }
+
+//     if (authCondition) {
+
+//         const authExpr = cds.parse.expr(authCondition).xpr;
+
+//         if (query.SELECT.where) {
+//             query.SELECT.where = [
+//                 "(",
+//                 ...query.SELECT.where,
+//                 ")",
+//                 "and",
+//                 ...authExpr
+//             ];
+//         } else {
+//             query.SELECT.where = authExpr;
+//         }
+//     }
+
+//     return cds.run(query);
+
+// });
+
 
   async function applyDataAccess(req) {
 
