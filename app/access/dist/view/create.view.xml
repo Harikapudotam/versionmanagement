@@ -1,0 +1,115 @@
+<mvc:View
+    controllerName="ust.access.access.controller.create"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+>
+    <Page
+        id="_IDGenPage3"
+        title="Create new user"
+    >
+        <content>
+            <!-- ✅ HEADER SECTION -->
+            <Panel
+                id="_IDGenPanel1"
+                headerText="Header Details"
+                class="sapUiSmallMargin"
+            >
+                <f:SimpleForm
+                    id="_IDGenSimpleForm1"
+                    editable="true"
+                    layout="ResponsiveGridLayout"
+                    columnsXL="3"
+                    columnsL="3"
+                    columnsM="2"
+                >
+                    <f:content>
+                        <Label
+                            id="_IDGenLabel6"
+                            text="iasSubject"
+                        />
+                        <Input
+                            id="_IDGenInput"
+                            width="250px"
+                            value="{createModel>/iasSubject}"
+                        />
+
+                        <Label
+                            id="_IDGenLabel7"
+                            text="fullName"
+                        />
+                        <Input
+                            id="_IDGenInput1"
+                            width="250px"
+                            value="{createModel>/fullName}"
+                        />
+
+                        <Label
+                            id="_IDGenLabel8"
+                            text="role"
+                        />
+                        <Input
+                            id="_IDGenInput2"
+                            width="250px"
+                            value="{createModel>/role}"
+                        />
+
+                        
+
+                       
+
+                        <Label
+                            id="_IDGenLabel11"
+                            text="companies"
+                        />
+                        <Input
+                            id="_IDGenInput3"
+                            width="250px"
+                            value="{createModel>/companies}"
+                        />
+
+                        <Label id="_IDGenLabel18"
+                           
+                            text="projects"
+                        />
+                        <Input id="_IDGenInput20"
+                           
+                            width="250px"
+                            value="{createModel>/projects}"
+                        />
+                        <Label id="_IDGenLabel19"
+                           
+                            text="isActive"
+                        />
+                        <Input id="_IDGenInput21"
+                           
+                            width="250px"
+                            value="{createModel>/isActive}"
+                    
+                            
+                        />
+                    </f:content>
+                </f:SimpleForm>
+            </Panel>
+
+</content>
+
+        <!-- ✅ FOOTER -->
+        <footer>
+            <Toolbar id="_IDGenToolbar">
+                <ToolbarSpacer id="_IDGenToolbarSpacer" />
+                <Button
+                    id="_IDGenButton1"
+                    text="Save"
+                    type="Emphasized"
+                    press=".onSave"
+                />
+                <Button
+                    id="_IDGenButton2"
+                    text="Cancel"
+                    press=".onCancel"
+                />
+            </Toolbar>
+        </footer>
+    </Page>
+</mvc:View>

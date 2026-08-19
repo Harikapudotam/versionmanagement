@@ -1,0 +1,108 @@
+<mvc:View
+    controllerName="ust.so.soreq.controller.Item"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+>
+    <Page
+        id="_IDGenPage1"
+        title="Item Details"
+    >
+        <headerContent />
+
+        <content>
+            <Panel
+                id="_IDGenPanel2"
+                headerText="Item Details"
+                class="sapUiResponsiveMargin"
+            >
+                <f:SimpleForm
+                    id="_IDGenSimpleForm2"
+                    editable="true"
+                    layout="ResponsiveGridLayout"
+                    columnsXL="2"
+                    columnsL="2"
+                >
+                    <f:content>
+                        <Label
+                            id="_IDGenLabel9"
+                            text="Item No"
+                        />
+                        <Input
+                            id="_IDGenInput1"
+                            value="{ItemNo}"
+                            editable="false"
+                            width="200px"
+                        />
+
+                        <Label
+                            id="_IDGenLabel10"
+                            text="Material"
+                        />
+                        <Input
+                            id="_IDGenInput2"
+                            value="{MaterialNo}"
+                            editable="false"
+                            width="200px"
+                        />
+
+                        <Label
+                            id="_IDGenLabel11"
+                            text="Description"
+                        />
+                        <Input
+                            id="_IDGenInput3"
+                            value="{MaterialDescription}"
+                            editable="false"
+                            width="200px"
+                        />
+
+                        <Label
+                            id="_IDGenLabel14"
+                            text="Quantity"
+                        />
+                        <Input
+                            id="_IDGenInput4"
+                            value="{Quantity}"
+                            editable="false"
+                            width="200px"
+                        />
+
+                        <Label
+                            id="_IDGenLabel15"
+                            text="UOM"
+                        />
+                        <Input
+                            id="_IDGenInput5"
+                            value="{UOM}"
+                            editable="false"
+                            width="200px"
+                        />
+
+                        <Label
+                            id="_IDGenLabel16"
+                            text="Unit Price"
+                        />
+                        <Input
+                            id="_IDGenInput6"
+                            value="{UnitPrice}"
+                            editable="false"
+                            width="200px"
+                        />
+
+                        <Label
+                            id="_IDGenLabel17"
+                            text="Net Amount"
+                        />
+                        <Input
+                            id="_IDGenInput18"
+                            value="{NetAmount}"
+                            editable="false"
+                            width="200px"
+                        />
+                    </f:content>
+                </f:SimpleForm>
+            </Panel>
+        </content>
+    </Page>
+</mvc:View>

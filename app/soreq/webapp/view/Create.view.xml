@@ -83,6 +83,27 @@
                             width="250px"
                             value="{createModel>/Currency}"
                         />
+
+                        <Label id="_IDGenLabel18"
+                           
+                            text="companyCode"
+                        />
+                        <Input id="_IDGenInput20"
+                           
+                            width="250px"
+                            value="{createModel>/companyCode}"
+                        />
+                        <Label id="_IDGenLabel19"
+                           
+                            text="project"
+                        />
+                        <Input id="_IDGenInput21"
+                           
+                            width="250px"
+                            value="{createModel>/project}"
+                    
+                            
+                        />
                     </f:content>
                 </f:SimpleForm>
             </Panel>
@@ -98,10 +119,10 @@
                     items="{createModel>/Items}"
                 >
                     <headerToolbar>
-                        <OverflowToolbar>
-                            <Title text="Items" />
+                        <OverflowToolbar id="_IDGenOverflowToolbar">
+                            <Title id="_IDGenTitle1" text="Items" />
 
-                            <ToolbarSpacer />
+                            <ToolbarSpacer id="_IDGenToolbarSpacer2" />
 
                             <Button
                                 id="_IDGenButton"
@@ -114,39 +135,39 @@
                     </headerToolbar>
 
                     <columns>
-                        <Column>
-                            <Text text="Item" />
+                        <Column id="_IDGenColumn1">
+                            <Text id="_IDGenText" text="Item" />
                         </Column>
 
-                        <Column>
-                            <Text text="Material" />
+                        <Column id="_IDGenColumn2">
+                            <Text id="_IDGenText1" text="Material" />
                         </Column>
 
-                        <Column>
-                            <Text text="Qty" />
+                        <Column id="_IDGenColumn3">
+                            <Text id="_IDGenText2" text="Qty" />
                         </Column>
 
-                        <Column>
-                            <Text text="Price" />
+                        <Column id="_IDGenColumn4">
+                            <Text id="_IDGenText3" text="Price" />
                         </Column>
 
-                        <Column>
-                            <Text text="Amount" />
+                        <Column id="_IDGenColumn5">
+                            <Text id="_IDGenText4" text="Amount" />
                         </Column>
                     </columns>
 
                     <items>
-                        <ColumnListItem>
+                        <ColumnListItem id="_IDGenColumnListItem2">
                             <cells>
-                                <Input value="{createModel>ItemNo}" />
+                                <Input id="_IDGenInput22" value="{createModel>ItemNo}" />
 
-                                <Input value="{createModel>MaterialNo}" />
+                                <Input id="_IDGenInput23" value="{createModel>MaterialNo}" />
 
-                                <Input value="{createModel>Quantity}" />
+                                <Input id="_IDGenInput24" value="{createModel>Quantity}" />
 
-                                <Input value="{createModel>UnitPrice}" />
+                                <Input id="_IDGenInput25" value="{createModel>UnitPrice}" />
 
-                                <Input value="{createModel>NetAmount}" />
+                                <Input id="_IDGenInput26" value="{createModel>NetAmount}" />
                             </cells>
                         </ColumnListItem>
                     </items>

@@ -1,0 +1,5 @@
+###
+
+GET https://aka85bwey.trial-accounts.ondemand.com/scim/Users/16aea17a-1621-456b-9662-a84d966008f7
+Authorization: Basic cHVkb3RhLm1hcnloYXJpa2FAdXN0LmNvbTpIYXJpa2FAMjAwMg==
+Accept: application/scim+json

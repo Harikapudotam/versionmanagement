@@ -1,0 +1,18 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <SelectDialog
+        id="companyVHDialog"
+        title="Select Company Code"
+        search=".onCompanySearch"
+        confirm=".onCompanyConfirm"
+        cancel=".onCompanyCancel"
+    >
+
+        <StandardListItem id="_IDGenStandardListItem"
+            title="{value}" />
+
+    </SelectDialog>
+
+</core:FragmentDefinition>

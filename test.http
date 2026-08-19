@@ -1,0 +1,13 @@
+###
+
+GET http://localhost:4004/odata/v2/my/getCompanyCodes
+
+
+
+###
+POST http://localhost:4004/odata/v2/my/UserAccess
+
+
+###
+
+GET http://localhost:4004/odata/v2/my/UserAccess

@@ -1,0 +1,6 @@
+ID,iasSubject,fullName,role,companies,projects,isActive,createdAt,createdBy,modifiedAt,modifiedBy
+5018398e-37bf-4da2-bc95-6b80ea8968a7,pudota.maryharika@ust.com,Pudota Mary Harika,Engineer,"HP01,HP03","P3,P5",true,2026-05-01T09:00:00.000Z,pudota.maryharika@ust.com,2026-06-20T10:30:00.000Z,pudota.maryharika@ust.com
+50183992-da12-4628-a45f-ffac7942a420,chitturi.hemalatha@ust.com,Chitturi Hemalatha,Approver,"HP01,HP03",P2,true,2026-05-02T09:15:00.000Z,pudota.maryharika@ust.com,2026-06-22T11:00:00.000Z,chitturi.hemalatha@ust.com
+50184004-cf73-4f7a-917b-1893c6ad2a35,guruprasanna.tumkurkrishnamurthy@ust.com,Guruprasanna Tumkurkrishnamurthy,Admin,"HP01,HP02,HP03",P3,true,2026-05-03T08:45:00.000Z,pudota.maryharika@ust.com,2026-06-25T14:20:00.000Z,guruprasanna.tumkurkrishnamurthy@ust.com
+5018401f-c432-42ce-b930-cea83728b41b,former.employee@ust.com,Former Employee,Engineer,HP02,P4,false,2025-11-10T10:00:00.000Z,guruprasanna.tumkurkrishnamurthy@ust.com,2026-01-15T16:10:00.000Z,chitturi.hemalatha@ust.com
+50184025-207f-4f69-81bd-57a9ae098c79,contractor.user@ust.com,Contractor User,Reviewer,HP03,P5,false,2025-12-05T09:30:00.000Z,chitturi.hemalatha@ust.com,2026-03-10T12:45:00.000Z,guruprasanna.tumkurkrishnamurthy@ust.com

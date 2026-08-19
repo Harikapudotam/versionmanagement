@@ -1,0 +1,17 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <SelectDialog id="_IDGenSelectDialog1"
+        title="Select Project code"
+        search=".onProjectSearch"
+        confirm=".onProjectConfirm"
+        cancel=".onProjectCancel"
+    >
+
+        <StandardListItem id="_IDGenStandardListItem1" 
+            title="{value}" />
+
+    </SelectDialog>
+
+</core:FragmentDefinition>
